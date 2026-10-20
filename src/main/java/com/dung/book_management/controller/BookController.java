@@ -57,7 +57,7 @@ public class BookController {
         public ResponseEntity<ApiResponse<BookResponse>> create(@Valid @RequestBody BookRequest request) {
                 BookResponse saved = bookService.create(request);
                 return ResponseEntity.status(HttpStatus.CREATED)
-                                .body(ApiResponse.success("Cập nhật sách thành công", saved));// 201
+                                .body(ApiResponse.success("Thêm sách thành công", saved));// 201
         }
 
         @PutMapping("/{id}")
