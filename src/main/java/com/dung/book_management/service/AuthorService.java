@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.dung.book_management.dto.request.AuthorRequest;
 import com.dung.book_management.dto.response.AuthorResponse;
 import com.dung.book_management.exception.AuthorNotFoundException;
+import com.dung.book_management.exception.DuplicateAuthorException;
 import com.dung.book_management.model.Author;
 
 @Service
@@ -17,10 +18,6 @@ public class AuthorService {
             new Author(2L, "Joshua Bloch", "USA", 1961),
             new Author(3L, "Kathy Sierra", "USA", 1957)));
     private long nextId = 4;
-
-    public AuthorService() {
-        System.out.println("AuthorService duoc tao");
-    }
 
     public int count() {
         return authors.size();
@@ -55,6 +52,8 @@ public class AuthorService {
     }
 
     public AuthorResponse create(AuthorRequest request) {
+        if (existsByName(request.name(), request.nationality()))
+            throw new DuplicateAuthorException(request.name(), request.nationality());
         Author saved = new Author(nextId++, request.name(), request.nationality(), request.birthYear());
         authors.add(saved);
         return AuthorResponse.from(saved);
@@ -77,8 +76,8 @@ public class AuthorService {
             throw new AuthorNotFoundException(id);
     }
 
-    public boolean existsByTitleAndAuthor(String author) {
+    public boolean existsByName(String name, String nationality) {
         return authors.stream().anyMatch(
-                a -> a.name().equalsIgnoreCase(author));
+                a -> a.name().equalsIgnoreCase(name) && a.nationality().equalsIgnoreCase(nationality));
     }
 }

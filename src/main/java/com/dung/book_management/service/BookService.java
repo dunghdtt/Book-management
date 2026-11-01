@@ -21,10 +21,6 @@ public class BookService {
                         new Book(5L, "Head First Java", "Katty Sierra", 2005)));
         private long nextId = 6;
 
-        public BookService() {
-                System.out.println("BookService duoc tao");
-        }
-
         public List<BookResponse> findAll(String keyword, Integer fromYear, Integer toYear, String author) {
                 return books.stream()
                                 .filter(b -> keyword == null || keyword.isBlank()

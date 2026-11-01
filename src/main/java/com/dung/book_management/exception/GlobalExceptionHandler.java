@@ -26,15 +26,15 @@ public class GlobalExceptionHandler {
     }
 
     // 404
-    @ExceptionHandler(BookNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleNotFound(BookNotFoundException ex) {
+    @ExceptionHandler({ BookNotFoundException.class, AuthorNotFoundException.class })
+    public ResponseEntity<ApiResponse<Void>> handleNotFound(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.error(ex.getMessage()));
     }
 
     // 409
-    @ExceptionHandler(DuplicateBookException.class)
-    public ResponseEntity<ApiResponse<Void>> handleDuplicate(DuplicateBookException ex) {
+    @ExceptionHandler({ DuplicateBookException.class, DuplicateAuthorException.class })
+    public ResponseEntity<ApiResponse<Void>> handleDuplicate(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ApiResponse.error(ex.getMessage()));
     }
