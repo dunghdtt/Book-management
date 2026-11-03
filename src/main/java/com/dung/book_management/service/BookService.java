@@ -1,6 +1,5 @@
 package com.dung.book_management.service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -10,75 +9,71 @@ import com.dung.book_management.dto.response.BookResponse;
 import com.dung.book_management.exception.BookNotFoundException;
 import com.dung.book_management.exception.DuplicateBookException;
 import com.dung.book_management.model.Book;
+import com.dung.book_management.repository.BookRepository;
 
 @Service
 public class BookService {
-        private final List<Book> books = new ArrayList<>(List.of(
-                        new Book(1L, "Clean code", "Robert C. Martin", 2008),
-                        new Book(2L, "Effective java", "Joshua Bloch", 2018),
-                        new Book(3L, "Testing platform", "Joshua Bloch", 2018),
-                        new Book(4L, "Security Code", "Joshua Bloch", 2018),
-                        new Book(5L, "Head First Java", "Katty Sierra", 2005)));
-        private long nextId = 6;
+        private final BookRepository bookRepository;
+
+        public BookService(BookRepository bookRepository) {
+                this.bookRepository = bookRepository;
+        }
 
         public List<BookResponse> findAll(String keyword, Integer fromYear, Integer toYear, String author) {
-                return books.stream()
+                return bookRepository.findAll().stream()
                                 .filter(b -> keyword == null || keyword.isBlank()
-                                                || b.title().toLowerCase().contains(keyword.toLowerCase()))
+                                                || b.getTitle().toLowerCase().contains(keyword.toLowerCase()))
                                 .filter(b -> author == null || author.isBlank()
-                                                || b.author().toLowerCase().contains(author.toLowerCase()))
-                                .filter(b -> fromYear == null || b.publishedYear() >= fromYear)
-                                .filter(b -> toYear == null || b.publishedYear() <= toYear)
+                                                || b.getAuthor().toLowerCase().contains(author.toLowerCase()))
+                                .filter(b -> fromYear == null || b.getPublishedYear() >= fromYear)
+                                .filter(b -> toYear == null || b.getPublishedYear() <= toYear)
                                 .map(b -> BookResponse.from(b))
                                 .toList();
         }
 
         public BookResponse findById(Long id) {
-                return books.stream()
-                                .filter(b -> b.id().equals(id))
-                                .findFirst()
+                return bookRepository.findById(id)
                                 .map(b -> BookResponse.from(b))
                                 .orElseThrow(() -> new BookNotFoundException(id));
         }
 
         public List<BookResponse> findByAuthor(String author) {
-                return books.stream()
-                                .filter(b -> b.author().equalsIgnoreCase(author))
+                return bookRepository.findAll().stream()
+                                .filter(b -> b.getAuthor().equalsIgnoreCase(author))
                                 .map(b -> BookResponse.from(b))
                                 .toList();
         }
 
-        public int count() {
-                return books.size();
+        public Long count() {
+                return bookRepository.count();
         }
 
         public BookResponse create(BookRequest request) {
                 if (existsByTitleAndAuthor(request.title(), request.author()))
                         throw new DuplicateBookException(request.title(), request.author());
-                Book saved = new Book(nextId++, request.title(), request.author(), request.publishedYear());
-                books.add(saved);
+                Book book = new Book(request.title(), request.author(), request.publishedYear());
+                Book saved = bookRepository.save(book);
                 return BookResponse.from(saved);
         }
 
         public BookResponse update(Long id, BookRequest request) {
-                for (int i = 0; i < books.size(); i++) {
-                        if (books.get(i).id().equals(id)) {
-                                Book updated = new Book(id, request.title(), request.author(), request.publishedYear());
-                                books.set(i, updated);
-                                return BookResponse.from(updated);
-                        }
-                }
-                throw new BookNotFoundException(id);
+                Book book = bookRepository.findById(id)
+                                .orElseThrow(() -> new BookNotFoundException(id));
+                book.setTitle(request.title());
+                book.setAuthor(request.author());
+                book.setPublishedYear(request.publishedYear());
+                return BookResponse.from(bookRepository.save(book));
         }
 
         public void delete(Long id) {
-                boolean removed = books.removeIf(b -> b.id().equals(id));
-                if (!removed)
+                if (!bookRepository.existsById(id)) {
                         throw new BookNotFoundException(id);
+                }
+                bookRepository.deleteById(id);
         }
 
         public boolean existsByTitleAndAuthor(String title, String author) {
-                return books.stream().anyMatch(
-                                b -> b.title().equalsIgnoreCase(title) && b.author().equalsIgnoreCase(author));
+                return bookRepository.findAll().stream().anyMatch(
+                                b -> b.getTitle().equalsIgnoreCase(title) && b.getAuthor().equalsIgnoreCase(author));
         }
 }

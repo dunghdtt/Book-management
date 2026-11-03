@@ -22,17 +22,13 @@ public class StatsController {
     }
 
     @GetMapping("/count")
-    public ResponseEntity<ApiResponse<Integer>> count() {
+    public ResponseEntity<ApiResponse<Long>> count() {
         return ResponseEntity.ok(ApiResponse.success("Đếm số sách thành công", bookService.count()));
     }
 
     @GetMapping("/authors/count")
-    public ResponseEntity<ApiResponse<Integer>> countAuthor() {
+    public ResponseEntity<ApiResponse<Long>> countAuthor() {
         return ResponseEntity.ok(ApiResponse.success("Đếm thành công", authorService.count()));
     }
 
-    // @GetMapping("/crash")
-    // public String crash() {
-    // throw new RuntimeException("Lỗi bí mật: mật khẩu database là 123456");
-    // }
 }

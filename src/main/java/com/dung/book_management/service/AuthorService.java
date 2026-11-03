@@ -10,74 +10,70 @@ import com.dung.book_management.dto.response.AuthorResponse;
 import com.dung.book_management.exception.AuthorNotFoundException;
 import com.dung.book_management.exception.DuplicateAuthorException;
 import com.dung.book_management.model.Author;
+import com.dung.book_management.repository.AuthorRepository;
 
 @Service
 public class AuthorService {
-    private final List<Author> authors = new ArrayList<>(List.of(
-            new Author(1L, "Robert C. Martin", "USA", 1952),
-            new Author(2L, "Joshua Bloch", "USA", 1961),
-            new Author(3L, "Kathy Sierra", "USA", 1957)));
-    private long nextId = 4;
+    private final AuthorRepository authorRepository;
 
-    public int count() {
-        return authors.size();
+    public AuthorService(AuthorRepository authorRepository) {
+        this.authorRepository = authorRepository;
+    }
+
+    public long count() {
+        return authorRepository.count();
     }
 
     public List<AuthorResponse> findAll(String keyword, String nationality, Integer fromBirthYear,
             Integer toBirthYear) {
-        return authors.stream()
+        return authorRepository.findAll().stream()
                 .filter(a -> keyword == null || keyword.isBlank()
-                        || a.name().toLowerCase().contains(keyword.toLowerCase()))
+                        || a.getName().toLowerCase().contains(keyword.toLowerCase()))
                 .filter(a -> nationality == null || nationality.isBlank()
-                        || a.nationality().toLowerCase().contains(nationality.toLowerCase()))
-                .filter(a -> fromBirthYear == null || a.birthYear() >= fromBirthYear)
-                .filter(a -> toBirthYear == null || a.birthYear() <= toBirthYear)
+                        || a.getNationality().toLowerCase().contains(nationality.toLowerCase()))
+                .filter(a -> fromBirthYear == null || a.getBirthYear() >= fromBirthYear)
+                .filter(a -> toBirthYear == null || a.getBirthYear() <= toBirthYear)
                 .map(a -> AuthorResponse.from(a))
                 .toList();
     }
 
     public AuthorResponse findById(Long id) {
-        return authors.stream()
-                .filter(a -> a.id().equals(id))
-                .findFirst()
+        return authorRepository.findById(id)
                 .map(a -> AuthorResponse.from(a))
                 .orElseThrow(() -> new AuthorNotFoundException(id));
     }
 
     public List<AuthorResponse> findByNationality(String nationality) {
-        return authors.stream()
-                .filter(a -> a.nationality().equalsIgnoreCase(nationality))
+        return authorRepository.findAll().stream()
+                .filter(a -> a.getNationality().equalsIgnoreCase(nationality))
                 .map(a -> AuthorResponse.from(a))
                 .toList();
     }
 
     public AuthorResponse create(AuthorRequest request) {
-        if (existsByName(request.name(), request.nationality()))
+        if (existsByNameAndNationality(request.name(), request.nationality()))
             throw new DuplicateAuthorException(request.name(), request.nationality());
-        Author saved = new Author(nextId++, request.name(), request.nationality(), request.birthYear());
-        authors.add(saved);
+        Author author = new Author(request.name(), request.nationality(), request.birthYear());
+        Author saved = authorRepository.save(author);
         return AuthorResponse.from(saved);
     }
 
     public AuthorResponse update(Long id, AuthorRequest request) {
-        for (int i = 0; i < authors.size(); i++) {
-            if (authors.get(i).id().equals(id)) {
-                Author updated = new Author(id, request.name(), request.nationality(), request.birthYear());
-                authors.set(i, updated);
-                return AuthorResponse.from(updated);
-            }
-        }
-        throw new AuthorNotFoundException(id);
+        Author author = authorRepository.findById(id).orElseThrow(() -> new AuthorNotFoundException(id));
+        author.setName(request.name());
+        author.setNationality(request.nationality());
+        author.setBirthYear(request.birthYear());
+        return AuthorResponse.from(authorRepository.save(author));
     }
 
     public void delete(Long id) {
-        boolean removed = authors.removeIf(a -> a.id().equals(id));
-        if (!removed)
+        if (!authorRepository.existsById(id))
             throw new AuthorNotFoundException(id);
+        authorRepository.deleteById(id);
     }
 
-    public boolean existsByName(String name, String nationality) {
-        return authors.stream().anyMatch(
-                a -> a.name().equalsIgnoreCase(name) && a.nationality().equalsIgnoreCase(nationality));
+    public boolean existsByNameAndNationality(String name, String nationality) {
+        return authorRepository.findAll().stream().anyMatch(
+                a -> a.getName().equalsIgnoreCase(name) && a.getNationality().equalsIgnoreCase(nationality));
     }
 }

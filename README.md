@@ -95,3 +95,5 @@ cd Book-management
 | 404 | Không tìm thấy sách / tác giả / đường dẫn |
 | 409 | Sách hoặc tác giả đã tồn tại              |
 | 500 | Lỗi hệ thống                              |
+
+Bộ test Postman: `postman/Book Management API.postman_collection.json` (Import vào Postman để chạy thử).
