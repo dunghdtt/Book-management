@@ -1,6 +1,5 @@
 package com.dung.book_management.service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -26,15 +25,8 @@ public class AuthorService {
 
     public List<AuthorResponse> findAll(String keyword, String nationality, Integer fromBirthYear,
             Integer toBirthYear) {
-        return authorRepository.findAll().stream()
-                .filter(a -> keyword == null || keyword.isBlank()
-                        || a.getName().toLowerCase().contains(keyword.toLowerCase()))
-                .filter(a -> nationality == null || nationality.isBlank()
-                        || a.getNationality().toLowerCase().contains(nationality.toLowerCase()))
-                .filter(a -> fromBirthYear == null || a.getBirthYear() >= fromBirthYear)
-                .filter(a -> toBirthYear == null || a.getBirthYear() <= toBirthYear)
-                .map(a -> AuthorResponse.from(a))
-                .toList();
+        return authorRepository.search(blankToNull(keyword), blankToNull(nationality), fromBirthYear, toBirthYear)
+                .stream().map(a -> AuthorResponse.from(a)).toList();
     }
 
     public AuthorResponse findById(Long id) {
@@ -44,8 +36,7 @@ public class AuthorService {
     }
 
     public List<AuthorResponse> findByNationality(String nationality) {
-        return authorRepository.findAll().stream()
-                .filter(a -> a.getNationality().equalsIgnoreCase(nationality))
+        return authorRepository.findByNationalityIgnoreCase(nationality).stream()
                 .map(a -> AuthorResponse.from(a))
                 .toList();
     }
@@ -73,7 +64,10 @@ public class AuthorService {
     }
 
     public boolean existsByNameAndNationality(String name, String nationality) {
-        return authorRepository.findAll().stream().anyMatch(
-                a -> a.getName().equalsIgnoreCase(name) && a.getNationality().equalsIgnoreCase(nationality));
+        return authorRepository.existsByNameIgnoreCaseAndNationalityIgnoreCase(name, nationality);
+    }
+
+    private String blankToNull(String value) {
+        return (value == null || value.isBlank()) ? null : value.trim();
     }
 }

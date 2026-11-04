@@ -20,15 +20,8 @@ public class BookService {
         }
 
         public List<BookResponse> findAll(String keyword, Integer fromYear, Integer toYear, String author) {
-                return bookRepository.findAll().stream()
-                                .filter(b -> keyword == null || keyword.isBlank()
-                                                || b.getTitle().toLowerCase().contains(keyword.toLowerCase()))
-                                .filter(b -> author == null || author.isBlank()
-                                                || b.getAuthor().toLowerCase().contains(author.toLowerCase()))
-                                .filter(b -> fromYear == null || b.getPublishedYear() >= fromYear)
-                                .filter(b -> toYear == null || b.getPublishedYear() <= toYear)
-                                .map(b -> BookResponse.from(b))
-                                .toList();
+                return bookRepository.search(blankToNull(keyword), blankToNull(author), fromYear, toYear)
+                                .stream().map(b -> BookResponse.from(b)).toList();
         }
 
         public BookResponse findById(Long id) {
@@ -38,8 +31,7 @@ public class BookService {
         }
 
         public List<BookResponse> findByAuthor(String author) {
-                return bookRepository.findAll().stream()
-                                .filter(b -> b.getAuthor().equalsIgnoreCase(author))
+                return bookRepository.findByAuthorIgnoreCase(author).stream()
                                 .map(b -> BookResponse.from(b))
                                 .toList();
         }
@@ -73,7 +65,10 @@ public class BookService {
         }
 
         public boolean existsByTitleAndAuthor(String title, String author) {
-                return bookRepository.findAll().stream().anyMatch(
-                                b -> b.getTitle().equalsIgnoreCase(title) && b.getAuthor().equalsIgnoreCase(author));
+                return bookRepository.existsByTitleIgnoreCaseAndAuthorIgnoreCase(title, author);
+        }
+
+        private String blankToNull(String value) {
+                return (value == null || value.isBlank()) ? null : value.trim();
         }
 }
