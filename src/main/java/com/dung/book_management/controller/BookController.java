@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dung.book_management.dto.ApiResponse;
+import com.dung.book_management.dto.PageResponse;
 import com.dung.book_management.dto.request.BookRequest;
 import com.dung.book_management.dto.response.BookResponse;
 import com.dung.book_management.service.BookService;
@@ -33,11 +34,17 @@ public class BookController {
         }
 
         @GetMapping
-        public ResponseEntity<ApiResponse<List<BookResponse>>> getAll(@RequestParam(required = false) String keyword,
+        public ResponseEntity<ApiResponse<PageResponse<BookResponse>>> getAll(
+                        @RequestParam(required = false) String keyword,
                         @RequestParam(required = false) Integer fromYear,
                         @RequestParam(required = false) Integer toYear,
-                        @RequestParam(required = false) String author) {
-                List<BookResponse> books = bookService.findAll(keyword, fromYear, toYear, author);
+                        @RequestParam(required = false) String author,
+                        @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "5") int size,
+                        @RequestParam(defaultValue = "id") String sortBy,
+                        @RequestParam(defaultValue = "asc") String direction) {
+                PageResponse<BookResponse> books = bookService.findAll(keyword, fromYear, toYear, author, page, size,
+                                sortBy, direction);
                 return ResponseEntity.ok(ApiResponse.success("Lấy danh sách sách thành công", books));
         }
 
@@ -71,6 +78,14 @@ public class BookController {
         public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
                 bookService.delete(id);
                 return ResponseEntity.ok(ApiResponse.success("Xoá sách thành công", null));// 204
+        }
+
+        @GetMapping("/paged")
+        public ResponseEntity<ApiResponse<PageResponse<BookResponse>>> getPaged(
+                        @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "5") int size) {
+                PageResponse<BookResponse> books = bookService.getBooksPaged(page, size);
+                return ResponseEntity.ok(ApiResponse.success("Lấy danh sách sách thành công", books));
         }
 
 }

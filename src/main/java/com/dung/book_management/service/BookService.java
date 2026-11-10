@@ -1,13 +1,19 @@
 package com.dung.book_management.service;
 
 import java.util.List;
+import java.util.Set;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
+import org.springframework.data.domain.Sort;
+import com.dung.book_management.dto.PageResponse;
 import com.dung.book_management.dto.request.BookRequest;
 import com.dung.book_management.dto.response.BookResponse;
 import com.dung.book_management.exception.BookNotFoundException;
 import com.dung.book_management.exception.DuplicateBookException;
+import com.dung.book_management.exception.InvalidPageException;
 import com.dung.book_management.model.Book;
 import com.dung.book_management.repository.BookRepository;
 
@@ -19,9 +25,28 @@ public class BookService {
                 this.bookRepository = bookRepository;
         }
 
-        public List<BookResponse> findAll(String keyword, Integer fromYear, Integer toYear, String author) {
-                return bookRepository.search(blankToNull(keyword), blankToNull(author), fromYear, toYear)
-                                .stream().map(b -> BookResponse.from(b)).toList();
+        private Pageable createPageable(int page, int size, String sortBy, String direction) {
+                if (page < 0) {
+                        throw new InvalidPageException("page phai lon hon hoac bang 0");
+                }
+                if (size < 1) {
+                        throw new InvalidPageException("size phai lon hon hoac bang 1");
+                }
+                Set<String> allowed = Set.of("id", "title", "author", "publishedYear");
+                if (!allowed.contains(sortBy)) {
+                        throw new InvalidPageException(direction);
+                }
+                Sort sort = ("asc".equalsIgnoreCase(direction)) ? Sort.by(sortBy).ascending()
+                                : Sort.by(sortBy).descending();
+                return PageRequest.of(page, Math.min(size, 50), sort);
+        }
+
+        public PageResponse<BookResponse> findAll(String keyword, Integer fromYear, Integer toYear,
+                        String author, int page, int size, String sortBy, String direction) {
+                Pageable pageable = createPageable(page, size, sortBy, direction);
+                Page<Book> bookPage = bookRepository.search(
+                                blankToNull(keyword), blankToNull(author), fromYear, toYear, pageable);
+                return PageResponse.from(bookPage.map(BookResponse::from));
         }
 
         public BookResponse findById(Long id) {
@@ -70,5 +95,11 @@ public class BookService {
 
         private String blankToNull(String value) {
                 return (value == null || value.isBlank()) ? null : value.trim();
+        }
+
+        public PageResponse<BookResponse> getBooksPaged(int page, int size) {
+                Pageable pageable = createPageable(page, size, "id", "asc");
+                Page<Book> bookPage = bookRepository.findAll(pageable);
+                return PageResponse.from(bookPage.map(BookResponse::from));
         }
 }

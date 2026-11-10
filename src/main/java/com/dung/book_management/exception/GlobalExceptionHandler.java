@@ -78,4 +78,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE) // 415
                 .body(ApiResponse.error("Dữ liệu gửi lên phải ở dạng JSON"));
     }
+
+    @ExceptionHandler(InvalidPageException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidPage(InvalidPageException ex) {
+        return ResponseEntity.badRequest().body(ApiResponse.error(ex.getMessage()));
+    }
 }
