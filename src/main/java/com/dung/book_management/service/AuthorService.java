@@ -1,23 +1,29 @@
 package com.dung.book_management.service;
 
+import com.dung.book_management.repository.BookRepository;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 
 import com.dung.book_management.dto.request.AuthorRequest;
 import com.dung.book_management.dto.response.AuthorResponse;
+import com.dung.book_management.dto.response.BookResponse;
+import com.dung.book_management.exception.AuthorHasBooksException;
 import com.dung.book_management.exception.AuthorNotFoundException;
 import com.dung.book_management.exception.DuplicateAuthorException;
 import com.dung.book_management.mapper.AuthorMapper;
+import com.dung.book_management.mapper.BookMapper;
 import com.dung.book_management.model.Author;
 import com.dung.book_management.repository.AuthorRepository;
 
 @Service
 public class AuthorService {
+    private final BookRepository bookRepository;
     private final AuthorRepository authorRepository;
 
-    public AuthorService(AuthorRepository authorRepository) {
+    public AuthorService(AuthorRepository authorRepository, BookRepository bookRepository) {
         this.authorRepository = authorRepository;
+        this.bookRepository = bookRepository;
     }
 
     public long count() {
@@ -58,6 +64,8 @@ public class AuthorService {
     public void delete(Long id) {
         if (!authorRepository.existsById(id))
             throw new AuthorNotFoundException(id);
+        if (bookRepository.existsByAuthorId(id))
+            throw new AuthorHasBooksException(id);
         authorRepository.deleteById(id);
     }
 
@@ -67,5 +75,12 @@ public class AuthorService {
 
     private String blankToNull(String value) {
         return (value == null || value.isBlank()) ? null : value.trim();
+    }
+
+    public List<BookResponse> findBooksOfAuthor(Long id) {
+        if (!authorRepository.existsById(id)) {
+            throw new AuthorNotFoundException(id);
+        }
+        return bookRepository.findByAuthorId(id).stream().map(BookMapper::toResponse).toList();
     }
 }

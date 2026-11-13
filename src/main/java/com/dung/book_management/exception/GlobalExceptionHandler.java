@@ -35,7 +35,7 @@ public class GlobalExceptionHandler {
     }
 
     // 409
-    @ExceptionHandler({ DuplicateBookException.class, DuplicateAuthorException.class })
+    @ExceptionHandler({ DuplicateBookException.class, DuplicateAuthorException.class, AuthorHasBooksException.class })
     public ResponseEntity<ApiResponse<Void>> handleDuplicate(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ApiResponse.error(ex.getMessage()));

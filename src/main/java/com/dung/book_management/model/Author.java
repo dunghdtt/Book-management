@@ -1,10 +1,14 @@
 package com.dung.book_management.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -20,9 +24,15 @@ public class Author {
     private String nationality;
     @Column(nullable = false)
     private int birthYear;
+    @OneToMany(mappedBy = "author")
+    private List<Book> books = new ArrayList<>();
 
     protected Author() {
 
+    }
+
+    public List<Book> getBooks() {
+        return books;
     }
 
     public Author(String name, String nationality, int birthYear) {

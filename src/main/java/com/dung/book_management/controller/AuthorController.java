@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.dung.book_management.dto.ApiResponse;
 import com.dung.book_management.dto.request.AuthorRequest;
 import com.dung.book_management.dto.response.AuthorResponse;
+import com.dung.book_management.dto.response.BookResponse;
 import com.dung.book_management.service.AuthorService;
 
 import jakarta.validation.Valid;
@@ -45,6 +46,12 @@ public class AuthorController {
     public ResponseEntity<ApiResponse<AuthorResponse>> getById(@PathVariable Long id) {
         AuthorResponse author = authorService.findById(id);
         return ResponseEntity.ok(ApiResponse.success("Lay tac gia thanh cong", author));
+    }
+
+    @GetMapping("/{id}/books")
+    public ResponseEntity<ApiResponse<List<BookResponse>>> geBooksOfAuthor(@PathVariable Long id) {
+        List<BookResponse> books = authorService.findBooksOfAuthor(id);
+        return ResponseEntity.ok(ApiResponse.success("Lay danh sach tac gia thanh cong", books));
     }
 
     @GetMapping("/nationality/{nationality}")

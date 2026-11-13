@@ -13,7 +13,11 @@ import com.dung.book_management.model.Book;
 public interface BookRepository extends JpaRepository<Book, Long> {
     List<Book> findByAuthorNameIgnoreCase(String author);
 
+    List<Book> findByAuthorId(Long authorId);
+
     boolean existsByTitleIgnoreCaseAndAuthorId(String title, Long author);
+
+    boolean existsByAuthorId(Long authorId);
 
     @Query("""
                 SELECT b FROM Book b
