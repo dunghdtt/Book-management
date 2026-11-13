@@ -14,6 +14,7 @@ import com.dung.book_management.dto.response.BookResponse;
 import com.dung.book_management.exception.BookNotFoundException;
 import com.dung.book_management.exception.DuplicateBookException;
 import com.dung.book_management.exception.InvalidPageException;
+import com.dung.book_management.mapper.BookMapper;
 import com.dung.book_management.model.Book;
 import com.dung.book_management.repository.BookRepository;
 
@@ -34,7 +35,7 @@ public class BookService {
                 }
                 Set<String> allowed = Set.of("id", "title", "author", "publishedYear");
                 if (!allowed.contains(sortBy)) {
-                        throw new InvalidPageException(direction);
+                        throw new InvalidPageException("sort by khong hop le: " + sortBy);
                 }
                 Sort sort = ("asc".equalsIgnoreCase(direction)) ? Sort.by(sortBy).ascending()
                                 : Sort.by(sortBy).descending();
@@ -46,18 +47,18 @@ public class BookService {
                 Pageable pageable = createPageable(page, size, sortBy, direction);
                 Page<Book> bookPage = bookRepository.search(
                                 blankToNull(keyword), blankToNull(author), fromYear, toYear, pageable);
-                return PageResponse.from(bookPage.map(BookResponse::from));
+                return PageResponse.from(bookPage.map(BookMapper::toResponse));
         }
 
         public BookResponse findById(Long id) {
                 return bookRepository.findById(id)
-                                .map(b -> BookResponse.from(b))
+                                .map(BookMapper::toResponse)
                                 .orElseThrow(() -> new BookNotFoundException(id));
         }
 
         public List<BookResponse> findByAuthor(String author) {
                 return bookRepository.findByAuthorIgnoreCase(author).stream()
-                                .map(b -> BookResponse.from(b))
+                                .map(BookMapper::toResponse)
                                 .toList();
         }
 
@@ -68,18 +69,15 @@ public class BookService {
         public BookResponse create(BookRequest request) {
                 if (existsByTitleAndAuthor(request.title(), request.author()))
                         throw new DuplicateBookException(request.title(), request.author());
-                Book book = new Book(request.title(), request.author(), request.publishedYear());
-                Book saved = bookRepository.save(book);
-                return BookResponse.from(saved);
+                Book saved = bookRepository.save(BookMapper.toEntity(request));
+                return BookMapper.toResponse(saved);
         }
 
         public BookResponse update(Long id, BookRequest request) {
                 Book book = bookRepository.findById(id)
                                 .orElseThrow(() -> new BookNotFoundException(id));
-                book.setTitle(request.title());
-                book.setAuthor(request.author());
-                book.setPublishedYear(request.publishedYear());
-                return BookResponse.from(bookRepository.save(book));
+                BookMapper.updateEntity(book, request);
+                return BookMapper.toResponse(book);
         }
 
         public void delete(Long id) {
@@ -100,6 +98,6 @@ public class BookService {
         public PageResponse<BookResponse> getBooksPaged(int page, int size) {
                 Pageable pageable = createPageable(page, size, "id", "asc");
                 Page<Book> bookPage = bookRepository.findAll(pageable);
-                return PageResponse.from(bookPage.map(BookResponse::from));
+                return PageResponse.from(bookPage.map(BookMapper::toResponse));
         }
 }

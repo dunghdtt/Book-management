@@ -8,6 +8,7 @@ import com.dung.book_management.dto.request.AuthorRequest;
 import com.dung.book_management.dto.response.AuthorResponse;
 import com.dung.book_management.exception.AuthorNotFoundException;
 import com.dung.book_management.exception.DuplicateAuthorException;
+import com.dung.book_management.mapper.AuthorMapper;
 import com.dung.book_management.model.Author;
 import com.dung.book_management.repository.AuthorRepository;
 
@@ -26,35 +27,32 @@ public class AuthorService {
     public List<AuthorResponse> findAll(String keyword, String nationality, Integer fromBirthYear,
             Integer toBirthYear) {
         return authorRepository.search(blankToNull(keyword), blankToNull(nationality), fromBirthYear, toBirthYear)
-                .stream().map(a -> AuthorResponse.from(a)).toList();
+                .stream().map(AuthorMapper::toResponse).toList();
     }
 
     public AuthorResponse findById(Long id) {
         return authorRepository.findById(id)
-                .map(a -> AuthorResponse.from(a))
+                .map(AuthorMapper::toResponse)
                 .orElseThrow(() -> new AuthorNotFoundException(id));
     }
 
     public List<AuthorResponse> findByNationality(String nationality) {
         return authorRepository.findByNationalityIgnoreCase(nationality).stream()
-                .map(a -> AuthorResponse.from(a))
+                .map(AuthorMapper::toResponse)
                 .toList();
     }
 
     public AuthorResponse create(AuthorRequest request) {
         if (existsByNameAndNationality(request.name(), request.nationality()))
             throw new DuplicateAuthorException(request.name(), request.nationality());
-        Author author = new Author(request.name(), request.nationality(), request.birthYear());
-        Author saved = authorRepository.save(author);
-        return AuthorResponse.from(saved);
+        Author saved = authorRepository.save(AuthorMapper.toEntity(request));
+        return AuthorMapper.toResponse(saved);
     }
 
     public AuthorResponse update(Long id, AuthorRequest request) {
         Author author = authorRepository.findById(id).orElseThrow(() -> new AuthorNotFoundException(id));
-        author.setName(request.name());
-        author.setNationality(request.nationality());
-        author.setBirthYear(request.birthYear());
-        return AuthorResponse.from(authorRepository.save(author));
+        AuthorMapper.updateEntity(author, request);
+        return AuthorMapper.toResponse(author);
     }
 
     public void delete(Long id) {
