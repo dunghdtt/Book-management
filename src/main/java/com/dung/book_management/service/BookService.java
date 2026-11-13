@@ -11,19 +11,24 @@ import org.springframework.data.domain.Sort;
 import com.dung.book_management.dto.PageResponse;
 import com.dung.book_management.dto.request.BookRequest;
 import com.dung.book_management.dto.response.BookResponse;
+import com.dung.book_management.exception.AuthorNotFoundException;
 import com.dung.book_management.exception.BookNotFoundException;
 import com.dung.book_management.exception.DuplicateBookException;
 import com.dung.book_management.exception.InvalidPageException;
 import com.dung.book_management.mapper.BookMapper;
+import com.dung.book_management.model.Author;
 import com.dung.book_management.model.Book;
+import com.dung.book_management.repository.AuthorRepository;
 import com.dung.book_management.repository.BookRepository;
 
 @Service
 public class BookService {
         private final BookRepository bookRepository;
+        private final AuthorRepository authorRepository;
 
-        public BookService(BookRepository bookRepository) {
+        public BookService(BookRepository bookRepository, AuthorRepository authorRepository) {
                 this.bookRepository = bookRepository;
+                this.authorRepository = authorRepository;
         }
 
         private Pageable createPageable(int page, int size, String sortBy, String direction) {
@@ -33,7 +38,7 @@ public class BookService {
                 if (size < 1) {
                         throw new InvalidPageException("size phai lon hon hoac bang 1");
                 }
-                Set<String> allowed = Set.of("id", "title", "author", "publishedYear");
+                Set<String> allowed = Set.of("id", "title", "author.name", "publishedYear");
                 if (!allowed.contains(sortBy)) {
                         throw new InvalidPageException("sort by khong hop le: " + sortBy);
                 }
@@ -57,7 +62,7 @@ public class BookService {
         }
 
         public List<BookResponse> findByAuthor(String author) {
-                return bookRepository.findByAuthorIgnoreCase(author).stream()
+                return bookRepository.findByAuthorNameIgnoreCase(author).stream()
                                 .map(BookMapper::toResponse)
                                 .toList();
         }
@@ -67,17 +72,19 @@ public class BookService {
         }
 
         public BookResponse create(BookRequest request) {
-                if (existsByTitleAndAuthor(request.title(), request.author()))
-                        throw new DuplicateBookException(request.title(), request.author());
-                Book saved = bookRepository.save(BookMapper.toEntity(request));
+                Author author = findAuthor(request.authorId());
+                if (existsByTitleAndAuthor(request.title(), author.getId()))
+                        throw new DuplicateBookException(request.title(), author.getName());
+                Book saved = bookRepository.save(BookMapper.toEntity(request, author));
                 return BookMapper.toResponse(saved);
         }
 
         public BookResponse update(Long id, BookRequest request) {
                 Book book = bookRepository.findById(id)
                                 .orElseThrow(() -> new BookNotFoundException(id));
-                BookMapper.updateEntity(book, request);
-                return BookMapper.toResponse(book);
+                Author author = findAuthor(request.authorId());
+                BookMapper.updateEntity(book, request, author);
+                return BookMapper.toResponse(bookRepository.save(book));
         }
 
         public void delete(Long id) {
@@ -87,12 +94,16 @@ public class BookService {
                 bookRepository.deleteById(id);
         }
 
-        public boolean existsByTitleAndAuthor(String title, String author) {
-                return bookRepository.existsByTitleIgnoreCaseAndAuthorIgnoreCase(title, author);
+        public boolean existsByTitleAndAuthor(String title, Long authorId) {
+                return bookRepository.existsByTitleIgnoreCaseAndAuthorId(title, authorId);
         }
 
         private String blankToNull(String value) {
                 return (value == null || value.isBlank()) ? null : value.trim();
+        }
+
+        private Author findAuthor(Long authorId) {
+                return authorRepository.findById(authorId).orElseThrow(() -> new AuthorNotFoundException(authorId));
         }
 
         public PageResponse<BookResponse> getBooksPaged(int page, int size) {

@@ -11,14 +11,14 @@ import org.springframework.data.repository.query.Param;
 import com.dung.book_management.model.Book;
 
 public interface BookRepository extends JpaRepository<Book, Long> {
-    List<Book> findByAuthorIgnoreCase(String author);
+    List<Book> findByAuthorNameIgnoreCase(String author);
 
-    boolean existsByTitleIgnoreCaseAndAuthorIgnoreCase(String title, String author);
+    boolean existsByTitleIgnoreCaseAndAuthorId(String title, Long author);
 
     @Query("""
                 SELECT b FROM Book b
                 WHERE(:keyword IS NULL OR LOWER(b.title) LIKE LOWER (CONCAT('%',:keyword,'%')))
-                AND(:author IS NULL OR LOWER(b.author) LIKE LOWER (CONCAT('%',:author,'%')))
+                AND(:author IS NULL OR LOWER(b.author.name) LIKE LOWER (CONCAT('%',:author,'%')))
                 AND(:fromYear IS NULL OR b.publishedYear >= :fromYear)
                 AND(:toYear IS NULL OR b.publishedYear <= :toYear)
             """)
