@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Sort;
 import com.dung.book_management.dto.PageResponse;
 import com.dung.book_management.dto.request.BookRequest;
@@ -47,6 +48,7 @@ public class BookService {
                 return PageRequest.of(page, Math.min(size, 50), sort);
         }
 
+        @Transactional(readOnly = true)
         public PageResponse<BookResponse> findAll(String keyword, Integer fromYear, Integer toYear,
                         String author, int page, int size, String sortBy, String direction) {
                 Pageable pageable = createPageable(page, size, sortBy, direction);
@@ -55,22 +57,26 @@ public class BookService {
                 return PageResponse.from(bookPage.map(BookMapper::toResponse));
         }
 
+        @Transactional(readOnly = true)
         public BookResponse findById(Long id) {
                 return bookRepository.findById(id)
                                 .map(BookMapper::toResponse)
                                 .orElseThrow(() -> new BookNotFoundException(id));
         }
 
+        @Transactional(readOnly = true)
         public List<BookResponse> findByAuthor(String author) {
                 return bookRepository.findByAuthorNameIgnoreCase(author).stream()
                                 .map(BookMapper::toResponse)
                                 .toList();
         }
 
+        @Transactional(readOnly = true)
         public Long count() {
                 return bookRepository.count();
         }
 
+        @Transactional
         public BookResponse create(BookRequest request) {
                 Author author = findAuthor(request.authorId());
                 if (existsByTitleAndAuthor(request.title(), author.getId()))
@@ -79,14 +85,16 @@ public class BookService {
                 return BookMapper.toResponse(saved);
         }
 
+        @Transactional
         public BookResponse update(Long id, BookRequest request) {
                 Book book = bookRepository.findById(id)
                                 .orElseThrow(() -> new BookNotFoundException(id));
                 Author author = findAuthor(request.authorId());
                 BookMapper.updateEntity(book, request, author);
-                return BookMapper.toResponse(bookRepository.save(book));
+                return BookMapper.toResponse(book);
         }
 
+        @Transactional
         public void delete(Long id) {
                 if (!bookRepository.existsById(id)) {
                         throw new BookNotFoundException(id);
@@ -106,6 +114,7 @@ public class BookService {
                 return authorRepository.findById(authorId).orElseThrow(() -> new AuthorNotFoundException(authorId));
         }
 
+        @Transactional(readOnly = true)
         public PageResponse<BookResponse> getBooksPaged(int page, int size) {
                 Pageable pageable = createPageable(page, size, "id", "asc");
                 Page<Book> bookPage = bookRepository.findAll(pageable);

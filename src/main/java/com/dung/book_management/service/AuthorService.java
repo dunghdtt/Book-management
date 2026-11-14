@@ -4,6 +4,7 @@ import com.dung.book_management.repository.BookRepository;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.dung.book_management.dto.request.AuthorRequest;
 import com.dung.book_management.dto.response.AuthorResponse;
@@ -26,28 +27,33 @@ public class AuthorService {
         this.bookRepository = bookRepository;
     }
 
+    @Transactional(readOnly = true)
     public long count() {
         return authorRepository.count();
     }
 
+    @Transactional(readOnly = true)
     public List<AuthorResponse> findAll(String keyword, String nationality, Integer fromBirthYear,
             Integer toBirthYear) {
         return authorRepository.search(blankToNull(keyword), blankToNull(nationality), fromBirthYear, toBirthYear)
                 .stream().map(AuthorMapper::toResponse).toList();
     }
 
+    @Transactional(readOnly = true)
     public AuthorResponse findById(Long id) {
         return authorRepository.findById(id)
                 .map(AuthorMapper::toResponse)
                 .orElseThrow(() -> new AuthorNotFoundException(id));
     }
 
+    @Transactional(readOnly = true)
     public List<AuthorResponse> findByNationality(String nationality) {
         return authorRepository.findByNationalityIgnoreCase(nationality).stream()
                 .map(AuthorMapper::toResponse)
                 .toList();
     }
 
+    @Transactional
     public AuthorResponse create(AuthorRequest request) {
         if (existsByNameAndNationality(request.name(), request.nationality()))
             throw new DuplicateAuthorException(request.name(), request.nationality());
@@ -55,12 +61,14 @@ public class AuthorService {
         return AuthorMapper.toResponse(saved);
     }
 
+    @Transactional
     public AuthorResponse update(Long id, AuthorRequest request) {
         Author author = authorRepository.findById(id).orElseThrow(() -> new AuthorNotFoundException(id));
         AuthorMapper.updateEntity(author, request);
         return AuthorMapper.toResponse(author);
     }
 
+    @Transactional
     public void delete(Long id) {
         if (!authorRepository.existsById(id))
             throw new AuthorNotFoundException(id);
@@ -77,6 +85,7 @@ public class AuthorService {
         return (value == null || value.isBlank()) ? null : value.trim();
     }
 
+    @Transactional(readOnly = true)
     public List<BookResponse> findBooksOfAuthor(Long id) {
         if (!authorRepository.existsById(id)) {
             throw new AuthorNotFoundException(id);
