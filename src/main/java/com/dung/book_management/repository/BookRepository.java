@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,14 +12,17 @@ import org.springframework.data.repository.query.Param;
 import com.dung.book_management.model.Book;
 
 public interface BookRepository extends JpaRepository<Book, Long> {
+    @EntityGraph(attributePaths = "author")
     List<Book> findByAuthorNameIgnoreCase(String author);
 
+    @EntityGraph(attributePaths = "author")
     List<Book> findByAuthorId(Long authorId);
 
     boolean existsByTitleIgnoreCaseAndAuthorId(String title, Long author);
 
     boolean existsByAuthorId(Long authorId);
 
+    @EntityGraph(attributePaths = "author")
     @Query("""
                 SELECT b FROM Book b
                 WHERE(:keyword IS NULL OR LOWER(b.title) LIKE LOWER (CONCAT('%',:keyword,'%')))
