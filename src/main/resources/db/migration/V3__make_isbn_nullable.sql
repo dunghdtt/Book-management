@@ -1,0 +1,2 @@
+ALTER TABLE books MODIFY COLUMN isbn VARCHAR(20) NULL;
+UPDATE books SET isbn = NULL WHERE isbn = '';

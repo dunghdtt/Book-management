@@ -24,15 +24,17 @@ public class Book {
     private Author author;
     @Column(nullable = false)
     private int publishedYear;
+    private String isbn;
 
     protected Book() {
 
     }
 
-    public Book(String title, Author author, int publishedYear) {
+    public Book(String title, Author author, int publishedYear, String isbn) {
         this.title = title;
         this.author = author;
         this.publishedYear = publishedYear;
+        this.isbn = isbn;
     }
 
     public Long getId() {
@@ -61,6 +63,14 @@ public class Book {
 
     public void setPublishedYear(int publishedYear) {
         this.publishedYear = publishedYear;
+    }
+
+    public void setIsbn(String isbn) {
+        this.isbn = isbn;
+    }
+
+    public String getIsbn() {
+        return isbn;
     }
 
 }

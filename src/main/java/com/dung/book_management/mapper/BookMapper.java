@@ -12,16 +12,17 @@ public final class BookMapper {
 
     public static BookResponse toResponse(Book book) {
         return new BookResponse(book.getId(), book.getTitle(),
-                book.getAuthor().getId(), book.getAuthor().getName(), book.getPublishedYear());
+                book.getAuthor().getId(), book.getAuthor().getName(), book.getPublishedYear(), book.getIsbn());
     }
 
     public static Book toEntity(BookRequest request, Author author) {
-        return new Book(request.title(), author, request.publishedYear());
+        return new Book(request.title(), author, request.publishedYear(), request.isbn());
     }
 
     public static void updateEntity(Book book, BookRequest request, Author author) {
         book.setTitle(request.title());
         book.setAuthor(author);
         book.setPublishedYear(request.publishedYear());
+        book.setIsbn(request.isbn());
     }
 }
